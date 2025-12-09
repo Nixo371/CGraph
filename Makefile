@@ -34,6 +34,6 @@ clean:
 	rm -rf $(OBJS)
 
 fclean: clean
-	rm -rf $(NAME)
+	rm -rf $(LIB)
 
 .PHONY: all test clean fclean

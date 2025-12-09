@@ -1,8 +1,10 @@
-// clangd nonsense
+# clangd nonsense
 .cache
 compile_commands.json
 
+# libraries
+**/*.a
 
-// stinky object files
+# stinky object files
 **/*.o
 
