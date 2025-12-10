@@ -8,4 +8,7 @@ typedef struct s_node {
 	int32_t value;
 } node;
 
+int32_t node_get_value(node* node);
+void node_set_value(node* node, int32_t value);
+
 #endif

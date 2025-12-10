@@ -14,12 +14,20 @@ void print_graph(graph* graph) {
 	printf("\n");
 
 	printf("-- Adjacency Matrix --\n");
-	for (uint32_t i = 0; i < graph->node_count; i++) {
-		for (uint32_t j = 0; j < graph->node_count; j++) {
+	for (uint32_t i = 0; i < graph->node_size; i++) {
+		for (uint32_t j = 0; j < graph->node_size; j++) {
 			printf("%u ", graph->adjacency_matrix[i][j]);
 		}
 		printf("\n");
 	}
+}
+
+void print_node_collection(node_collection* collection) {
+	printf("-- Nodes --\n");
+	for (uint32_t i = 0; i < collection->node_count; i++) {
+		printf("\t[%.2u] - ID: %.3u\n", i, collection->node_ids[i]);
+	}
+	printf("\n");
 }
 
 graph* initialize_graph() {
@@ -29,7 +37,7 @@ graph* initialize_graph() {
 	g->node_count = 0;
 	g->nodes = (node **) calloc(g->node_size, sizeof(node *));
 	for (uint32_t i = 0; i < g->node_size; i++) {
-		g->nodes[i] = (node *) calloc(g->node_size, sizeof(node));
+		g->nodes[i] = (node *) malloc(sizeof(node));
 	}
 
 	g->adjacency_matrix = (uint8_t **) calloc(g->node_size, sizeof(uint8_t *));
@@ -40,13 +48,40 @@ graph* initialize_graph() {
 	return (g);
 }
 
+// TODO check all mallocs
+int _expand_graph(graph* graph, uint32_t factor) {
+	graph->node_size *= factor;
+
+	graph->nodes = realloc(graph->nodes, graph->node_size * sizeof(node *));
+	for (uint32_t i = graph->node_size / factor; i < graph->node_size; i++) {
+		graph->nodes[i] = (node *) malloc(sizeof(node));
+	}
+
+	graph->adjacency_matrix = realloc(graph->adjacency_matrix, graph->node_size * sizeof(uint8_t *));
+	// expand existing rows
+	for (uint32_t i = 0; i < graph->node_size / factor; i++) {
+		graph->adjacency_matrix[i] = realloc(graph->adjacency_matrix[i], graph->node_size * sizeof(uint8_t));
+		for (uint32_t j = graph->node_size / factor; j < graph->node_size; j++) {
+			graph->adjacency_matrix[i][j] = 0;
+		}
+	}
+	// allocate new rows
+	for (uint32_t i = graph->node_size / factor; i < graph->node_size; i++) {
+		graph->adjacency_matrix[i] = (uint8_t *) calloc(graph->node_size, sizeof(uint8_t));
+		for (uint32_t j = 0; j < graph->node_size; j++) {
+			graph->adjacency_matrix[i][j] = 0;
+		}
+	}
+
+	return (0);
+}
 // TODO definitely going to have to use a hash table or something
 
 // returns node_id (array index?)
 // TODO definitely refactor because if you make and remove 100 nodes suddenly it's wasting memory
 int _graph_add_node(graph* graph, uint32_t id, int32_t value) {
 	if (graph->node_count >= graph->node_size) {
-		// TODO resize nodes and adjacency matrix
+		_expand_graph(graph, 2);
 	}
 
 	graph->nodes[graph->node_count]->id = id;
@@ -90,8 +125,10 @@ int graph_remove_node(graph* graph, uint32_t node_id) {
 	node* tmp = graph->nodes[node_i];
 	graph->nodes[node_i] = graph->nodes[graph->node_count - 1];
 	graph->nodes[graph->node_count - 1] = tmp;
-	// TODO handle adjacency matrix
-	// fuck me this is going to require a total rewrite
+
+	for (uint32_t i = 0; i < graph->node_size; i++) {
+		graph_remove_edge(graph, node_id, i);
+	}
 
 	graph->node_count -= 1;
 
@@ -130,18 +167,26 @@ int graph_adjacent(graph* graph, uint32_t node_id_a, uint32_t node_id_b) {
 	return (1);
 }
 
-// TODO
 node_collection* get_neighbors(graph* graph, uint32_t node_id) {
-	// TODO initialize collection
-	// node_collection *neighbors = (node_collection *) malloc(sizeof(node_collection));
+	node_collection *neighbors = (node_collection *) malloc(sizeof(node_collection));
+	uint32_t node_size = 4;
+	neighbors->node_count = 0;
+	neighbors->node_ids = (uint32_t *) calloc(node_size, sizeof(uint32_t));
 
-	for (uint32_t i = 0; i < graph->node_count; i++) {
-		if (graph_adjacent(graph, node_id, i) == 1) {
-			// TODO add to collection
+	for (uint32_t i = 0; i < graph->node_size; i++) {
+		if (node_id != i && graph_adjacent(graph, node_id, i) == 1) {
+			if (neighbors->node_count >= node_size) {
+				node_size *= 2;
+				neighbors->node_ids = realloc(neighbors->node_ids, node_size * sizeof(uint32_t));
+			}
+			neighbors->node_ids[neighbors->node_count] = i;
+			neighbors->node_count += 1;
 		}
 	}
 
-	return (NULL);
+	neighbors->node_ids = realloc(neighbors->node_ids, neighbors->node_count * sizeof(uint32_t));
+
+	return (neighbors);
 }
 
 // TODO

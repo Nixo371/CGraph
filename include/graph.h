@@ -16,12 +16,13 @@ typedef struct s_graph {
 } graph;
 
 typedef struct s_node_collection {
-	node* nodes;
-	uint32_t node_size;
+	uint32_t* node_ids;
+	// uint32_t node_size; // This will always be reallocated to exactly the amount of nodes
 	uint32_t node_count;
 } node_collection;
 
 void print_graph(graph* graph);
+void print_node_collection(node_collection* collection);
 
 graph* initialize_graph();
 
