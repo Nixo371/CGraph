@@ -35,5 +35,6 @@ clean:
 
 fclean: clean
 	rm -rf $(LIB)
+	rm -rf $(BUILDDIR)/test
 
 .PHONY: all test clean fclean

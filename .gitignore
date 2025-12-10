@@ -8,3 +8,5 @@ compile_commands.json
 # stinky object files
 **/*.o
 
+# build
+build
